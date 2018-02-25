@@ -9,6 +9,7 @@
 package org.openmrs;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.openmrs.customdatatype.Customizable;
@@ -42,15 +43,19 @@ public class Visit extends BaseCustomizableData<VisitAttribute> implements Audit
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "visit_id")
 	private Integer visitId;
 
 	@ManyToOne
+	@Column(name = "patient_id", nullable = false)
 	private Patient patient;
 
 	@ManyToOne
+	@Column(name = "visit_type_id", nullable = false)
 	private VisitType visitType;
 
 	@ManyToOne
+	@Column(name = "indication_concept_id")
 	private Concept indication;
 
 	@ManyToOne
@@ -62,6 +67,12 @@ public class Visit extends BaseCustomizableData<VisitAttribute> implements Audit
 	@Column(name = "date_stopped")
 	private Date stopDatetime;
 
+	/*
+		<set name="encounters" lazy="true"  order-by="encounter_datetime desc, encounter_id desc">
+			<key column="visit_id" />
+			<one-to-many class="Encounter" />
+		</set>
+	 */
 	@OneToMany(mappedBy = "visit", fetch = FetchType.LAZY)
 	@JsonIgnore
 		@OrderBy("encounter_datetime desc, encounter_id desc")

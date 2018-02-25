@@ -9,17 +9,39 @@
  */
 package org.openmrs;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
+
 /**
  * Privilege
  * 
  * @version 1.0
  */
+@Entity
+@Table(name = "privilege")
 public class Privilege extends BaseChangeableOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 312L;
 	
 	// Fields
 	
+	/*
+		<cache usage="read-write"/>
+		<id name="privilege" type="java.lang.String"
+			column="privilege" length="250">
+			<generator class="assigned" />
+		</id>
+	 */
+	@Id
+	@ManyToMany(mappedBy = "privileges")
+	@Column(name = "privilege", length = 250, nullable = false, unique = true)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private String privilege;
 	
 	// Constructors

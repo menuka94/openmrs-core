@@ -21,6 +21,10 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Cascade;
 import org.hibernate.search.annotations.ContainedIn;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
@@ -28,6 +32,14 @@ import org.openmrs.util.OpenmrsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 /**
  * A Person in the system. This can be either a small person stub, or indicative of an actual
@@ -37,55 +49,114 @@ import org.springframework.util.StringUtils;
  * 
  * @see org.openmrs.Patient
  */
+@Entity
+@Table(name = "person")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Person extends BaseChangeableOpenmrsData {
 	
 	public static final long serialVersionUID = 2L;
 	
 	private static final Logger log = LoggerFactory.getLogger(Person.class);
 
+	/*
+	<id name="personId" type="java.lang.Integer" column="person_id" unsaved-value="0">
+			<generator class="native">
+				<param name="sequence">person_person_id_seq</param>
+			</generator>
+		</id>
+	 */
 	@DocumentId
+	@Id
+	@Column(name = "person_id")
 	protected Integer personId;
 
+	/*
+		<!-- bi-directional one-to-many association to PersonAddress -->
+		<set name="addresses" lazy="false" inverse="true" batch-size="1000"
+			cascade="all-delete-orphan" sort="natural"
+			order-by="voided asc, preferred desc, date_created desc">
+			<cache usage="read-write"/>
+			<key column="person_id" not-null="true" />
+			<one-to-many class="PersonAddress" />
+		</set>
+	 */
 	private Set<PersonAddress> addresses = null;
 
+	/*
+		<!-- bi-directional one-to-many association to PersonName -->
+		<set name="names" lazy="false" inverse="true" batch-size="1000"
+			cascade="all-delete-orphan" sort="natural"
+			order-by="voided asc, preferred desc, date_created desc">
+			<cache usage="read-write"/>
+			<key column="person_id" />
+			<one-to-many class="PersonName" />
+		</set>
+	 */
 	@ContainedIn
 	private Set<PersonName> names = null;
 
+	/*
+		<set name="attributes" lazy="false" inverse="true" batch-size="1000"
+			cascade="all-delete-orphan" sort="natural">
+			<cache usage="read-write"/>
+			<key column="person_id" />
+			<one-to-many class="PersonAttribute" />
+		</set>
+	 */
 	@ContainedIn
+	@OneToMany(orphanRemoval = true, fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@BatchSize(size = 1000)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private Set<PersonAttribute> attributes = null;
 
 	@Field
+	@Column(name = "gender", length = 50, nullable = false)
 	private String gender;
 
+	@Column(name = "birthdate", length = 10)
 	private Date birthdate;
-
+	
+	@Column(name = "birthtime")
 	private Date birthtime;
 
+	@Column(name = "birthdate_estimated")
 	private Boolean birthdateEstimated = false;
 
+	@Column(name = "deathdate_estimated")
 	private Boolean deathdateEstimated = false;
 
 	@Field
+	@Column(name = "dead", length = 1, nullable = false)
 	private Boolean dead = false;
 	
+	@Column(name = "death_date", length = 19)
 	private Date deathDate;
 	
+	@Column(name = "cause_of_death", nullable = false)
 	private Concept causeOfDeath;
 	
+	@Column(name = "creator")
 	private User personCreator;
 	
+	@Column(name = "date_created", length = 19, nullable = false)
 	private Date personDateCreated;
 	
+	@Column(name = "changed_by")
 	private User personChangedBy;
 	
+	@Column(name = "date_changed", length = 19)
 	private Date personDateChanged;
 
+	@Column(name = "voided", length = 1, nullable = false)
 	private Boolean personVoided = false;
 	
+	@Column(name = "voided_by")
 	private User personVoidedBy;
 	
+	@Column(name = "date_voided", length = 19)
 	private Date personDateVoided;
 	
+	@Column(name = "void_reason")
 	private String personVoidReason;
 
 	@Field

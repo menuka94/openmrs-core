@@ -13,9 +13,18 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.openmrs.util.RoleConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
 
 /**
  * A Role is just an aggregater of {@link Privilege}s. {@link User}s contain a number of roles
@@ -25,6 +34,9 @@ import org.slf4j.LoggerFactory;
  *
  * @see Privilege
  */
+@Entity
+@Table(name = "role")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Role extends BaseChangeableOpenmrsMetadata {
 	
 	public static final long serialVersionUID = 1234233L;
@@ -33,13 +45,61 @@ public class Role extends BaseChangeableOpenmrsMetadata {
 	
 	// Fields
 	
+	/*
+		<id name="role" type="java.lang.String" column="role">
+			<generator class="assigned" />
+		</id>
+	 */
+	@Id
+	@Column(name = "role")
 	private String role;
 	
+	/*
+		<!-- bi-directional many-to-many association to Privilege -->
+		<set name="privileges" cascade="" lazy="false"
+			table="role_privilege">
+			<cache usage="read-write"/>
+			<key>
+				<column name="role" />
+			</key>
+			<many-to-many class="Privilege" column="privilege" />
+		</set>
+	 */
+	@ManyToMany(fetch = FetchType.EAGER)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private Set<Privilege> privileges;
-	
+
+	// =======================================================================================
+	/*
+		<!-- bi-directional many-to-many association to Role to create parentRoles-->
+		<set name="inheritedRoles" cascade="none" lazy="false" table="role_role">
+			<cache usage="read-write"/>
+			<key>
+				<column name="child_role" />
+			</key>
+			<many-to-many class="Role" column="parent_role" />
+		</set>
+	 */
+	@ManyToMany
 	private Set<Role> inheritedRoles;
-	
+
+	// =======================================================================================
+	/*
+		<!-- bi-directional many-to-many association to Role to create childRoles-->
+		<set name="childRoles" cascade="none" lazy="false"
+			table="role_role">
+			<cache usage="read-write"/>
+			<key>
+				<column name="parent_role" />
+			</key>
+			<many-to-many class="Role" column="child_role" />
+		</set>
+	 */
+	@ManyToMany(fetch = FetchType.EAGER)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private Set<Role> childRoles;
+	
+	// =======================================================================================
 	
 	// Constructors
 	

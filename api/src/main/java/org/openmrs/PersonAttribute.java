@@ -16,6 +16,8 @@ import java.util.Comparator;
 import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.search.annotations.Analyzer;
 import org.hibernate.search.annotations.Boost;
 import org.hibernate.search.annotations.DocumentId;
@@ -30,6 +32,14 @@ import org.openmrs.util.OpenmrsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
 /**
  * A PersonAttribute is meant as way for implementations to add arbitrary information about a
  * user/patient to their database. PersonAttributes are essentially just key-value pairs. However,
@@ -42,6 +52,9 @@ import org.slf4j.LoggerFactory;
  * @see org.openmrs.Attributable
  */
 @Indexed
+@Entity
+@Table(name = "person_attribute")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class PersonAttribute extends BaseChangeableOpenmrsData implements java.io.Serializable, Comparable<PersonAttribute> {
 	
 	public static final long serialVersionUID = 11231211232111L;
@@ -49,13 +62,27 @@ public class PersonAttribute extends BaseChangeableOpenmrsData implements java.i
 	private static final Logger log = LoggerFactory.getLogger(PersonAttribute.class);
 	
 	// Fields
+	
+	/*
+		<id name="personAttributeId" type="java.lang.Integer" column="person_attribute_id" unsaved-value="0">
+			<generator class="native">
+				<param name="sequence">person_attribute_person_attribute_id_seq</param>
+			</generator>
+		</id>
+	 */
 	@DocumentId
+	@Id
+	@Column(name = "person_attribute_id")
 	private Integer personAttributeId;
 
 	@IndexedEmbedded(includeEmbeddedObjectId = true)
+	@ManyToOne
+	@Column(name = "person_id")
 	private Person person;
 
 	@IndexedEmbedded
+	@ManyToOne
+	@Column(name = "person_attribute_type_id", nullable = false)
 	private PersonAttributeType attributeType;
 
 	@Fields({
